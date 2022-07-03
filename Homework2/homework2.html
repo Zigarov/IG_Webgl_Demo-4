@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Homework1 Pignata Giovanni 1913547</title>
+		<style>
+			body {
+				background-color: black;
+			  	color: white;
+			}
+		</style>
+	</head>
+
+	<body>
+		<img id = "texImage" src = "face.png" hidden></img>
+Start/Stop Animation:
+		<button id = "Animation">Animation</button>
+		<br>
+		<canvas id="gl-canvas" width="1024" height="800">
+			Oops ... your browser doesn't support the HTML5 canvas element
+		</canvas>
+		<br>
+Camera Distance:
+<input type="range" id="radius" min="0" max="20" step="1" value="10"/>
+<br><br>
+To rotate The Camera:
+		<button id = "buttonL">Left</button>
+		<button id = "buttonR">Right</button>
+		<button id = "buttonU">Up</button>
+		<button id = "buttonD">Down</button>
+		<br>
+In alternative, click and hold the mouse on the canvas and move it to rotate the camera.
+
+		<script id="vertex-shader" type="x-shader/x-vertex">
+			#version 300 es
+			in vec4 aPosition;
+			in vec3 aNormal;
+			in vec3 aTangent;
+			in vec2 aTexCoord;
+
+			out vec4 vColor;
+		    out vec2 vTexCoord;
+		    out vec3 L;
+
+			uniform vec4 uColor;
+			uniform mat4 uModelViewMatrix;
+			uniform mat4 uProjectionMatrix;
+			uniform vec4 uLightPosition;
+			uniform mat3 uNormalMatrix;
+			uniform bool uBump;
+
+			void main() {
+		    	gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
+				vColor = uColor;
+				vTexCoord = aTexCoord;
+
+				vec3 pos = (uModelViewMatrix * aPosition).xyz;
+				vec3 light = uLightPosition.xyz;
+				vec4 NN = vec4(aNormal,0);
+				vec3 T  = normalize(uNormalMatrix*aTangent);
+				vec3 M = normalize(uNormalMatrix*aNormal);
+				vec3 B = cross(M, T);
+				if (uBump){
+					L.x = dot(T, light-pos);
+					L.y = dot(B, light-pos);
+					L.z = dot(M, light-pos);
+					L = normalize(L);
+				}
+				else L = normalize(light - pos);
+
+			}
+		</script>
+
+		<script id="fragment-shader" type="x-shader/x-fragment">
+			#version 300 es
+			precision mediump float;
+			in vec4 vColor;
+			in vec2 vTexCoord;
+			in vec3 L;
+			uniform sampler2D uTextureMap;
+			uniform bool uBump;
+			out vec4 fColor;
+
+			void main() {
+				vec4 MM = texture(uTextureMap, vTexCoord);
+				vec3 M = (uBump) ? normalize(2.0*MM.xyz-1.0) : normalize(MM.xyz);
+				vec3 LL = normalize(L);
+				float Kd = max(dot(M,LL), 0.0);
+		    	fColor = (uBump) ? (Kd*vColor) :(Kd*vColor);
+				fColor.a = 1.0;
+			}
+		</script>
+
+		<script type="text/javascript" src="../Common/InitShaders.js"></script>
+		<script type="text/javascript" src="../Common/MVnew.js"></script>
+		<script type="text/javascript" src="homework2.js"></script>
+	</body>
+</html>
